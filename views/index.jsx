@@ -16,10 +16,11 @@ class Content extends React.Component {
     return (
       <html>
         <head>
-          <title>synthe!</title>
+          <title>Conglitch!</title>
         </head>
         <body>
           <div id="container" style={style.container}></div>
+          <canvas id="c" width="512" height="512"></canvas>
           <script type="text/javascript" src="./client.bundle.js"></script>
         </body>
       </html>
