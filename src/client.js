@@ -1,6 +1,10 @@
 'use strict';
 
 import React from 'react';
+import {
+  base64map,
+  reversedBase64Map
+} from './base64Util.js';
 
 window.onload = () => {
   const canvas = document.getElementById('c');
@@ -12,12 +16,6 @@ window.onload = () => {
     const base64Full = canvas.toDataURL('image/jpeg');
     const base64 = base64Full.split(',')[1];
     const bytes = [];
-    const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    const base64map = base64Chars.split('');
-    const reversedBase64Map = {};
-    base64map.forEach((v, i) => {
-      reversedBase64Map[v] = i;
-    });
 
     const len = base64.length;
     let prev;
