@@ -21,6 +21,7 @@ class Content extends React.Component {
         <body>
           <div id="container" style={style.container}></div>
           <canvas id="c" width="512" height="512"></canvas>
+          <script type="text/javascript" src="./zlib.min.js"></script>
           <script type="text/javascript" src="./client.bundle.js"></script>
         </body>
       </html>
