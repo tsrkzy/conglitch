@@ -3,7 +3,6 @@
 import {base64map} from './base64Util';
 
 function byteArrayToBase64(byteArray) {
-  console.log(byteArray); // @DELETEME
   if (!(byteArray instanceof Array)) {
     throw new Error('argument type miss match');
   }

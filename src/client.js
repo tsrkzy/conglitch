@@ -10,22 +10,23 @@ import splitWith0xDA from './splitWith0xDA.js';
 import parseDataChunk from './parseDataChunk.js';
 import byteArrayToBase64 from './byteArrayToBase64.js';
 import corrupt from './corrupt.js';
+import zlib from 'zlib';
+import {Buffer} from 'Buffer';
 
 window.onload = () => {
   const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
-  const image = new Image();
-  image.src = './lena_512.jpg';
+  const ctx    = canvas.getContext('2d');
+  const image  = new Image();
+  image.src    = './lena_512.jpg';
   image.onload = () => {
     ctx.drawImage(image, 0, 0);
     /* PNG */
-    const base64Full = canvas.toDataURL('image/png');
-    console.log(base64Full); // @DELETEME
-    const img = new Image();
+    const base64Full      = canvas.toDataURL('image/png');
+    const img             = new Image();
     const glitchedDataURL = pngGlitch(base64Full);
-    img.src = glitchedDataURL;
-    img.width = 256;
-    img.onload = () => {
+    img.src               = glitchedDataURL;
+    img.width             = 256;
+    img.onload            = () => {
       const body = document.body;
       body.appendChild(img);
     };
@@ -34,49 +35,80 @@ window.onload = () => {
       const byteArray = base64ToByteArray(base64);
       splitWith0x490x440x410x54IDAT(byteArray);
       const glitchedByteArray = byteArray;
-      const glitchedBase64 = byteArrayToBase64(glitchedByteArray);
+      const glitchedBase64    = byteArrayToBase64(glitchedByteArray);
 
       return glitchedBase64;
     }
 
     function splitWith0x490x440x410x54IDAT(byteArray) {
-      const header = [];
+      const header    = [];
       const idatArray = [];
-      let writeIndex = 0;
-      let find = false;
-      for (let i = 0; i < byteArray.length; i++) {
-        let byte0 = byteArray[i + 0];
-        let byte1 = byteArray[i + 1];
-        let byte2 = byteArray[i + 2];
-        let byte3 = byteArray[i + 3];
+      let writeIndex  = 0;
+      let find        = false;
+      for(let i = 0; i < byteArray.length; i++) {
+        let byte       = byteArray[i];
+        let byte4      = byteArray[i + 4];
+        let byte5      = byteArray[i + 5];
+        let byte6      = byteArray[i + 6];
+        let byte7      = byteArray[i + 7];
         const findTest =
-          byte0 === 0x49
-          && byte1 === 0x44
-          && byte2 === 0x41
-          && byte3 === 0x54;
+              byte4 === 0x49 // 73 > I
+              && byte5 === 0x44 // 68 > D
+              && byte6 === 0x41 // 65 > A
+              && byte7 === 0x54; // 84 > T
 
-        if (findTest) {
-          if (find) {
+        if(findTest) {
+          if(find) {
             writeIndex++;
           }
           find = true;
         }
-        if (!find) {
-          header.push(byte0);
+        if(!find) {
+          header.push(byte);
         } else {
           idatArray[writeIndex] = idatArray[writeIndex] || [];
-          const idat = idatArray[writeIndex];
-          idat.push(byte0);
+          const idat            = idatArray[writeIndex];
+          idat.push(byte);
         }
       }
-      console.log(idatArray); // @DELETEME
-      const sample = idatArray[0];
-      sample.splice(0, 4);
-      sample.splice(sample.length - 4, 4);
-      console.log(sample); // @DELETEME
-      const inflate = new Zlib.Inflate(sample);
-      const plain = inflate.decompress();
-      console.log(plain); // @DELETEME
+
+      for(let i = 0; i < idatArray.length; i++) {
+        let idat           = idatArray[i];
+        const sizHexDigit0 = idat[0];
+        const sizHexDigit1 = idat[1];
+        const sizHexDigit2 = idat[2];
+        const sizHexDigit3 = idat[3];
+        const siz          = (sizHexDigit0 << 24 | sizHexDigit1 << 16 | sizHexDigit2 << 8 | sizHexDigit3) >>> 0;
+        console.log('siz', siz); // @DELETEME
+        const offsetSizIdat = 4;
+
+        const data = [];
+        let _j;
+        for(_j = 0; _j < siz + offsetSizIdat; _j++) {
+          let j = _j + offsetSizIdat;
+          let d = idat[j];
+          data.push(d);
+        }
+        console.log('data', data); // @DELETEME
+        const buffer = Buffer.from(data);
+        console.log('buffer', buffer); // @DELETEME
+
+        zlib.inflate(buffer, (e, b) => {
+          if(e) {
+            console.error(e); // @DELETEME
+          }
+          console.log(b); // @DELETEME
+
+        });
+        return false;
+
+        // const crc0 = idat[_j++];
+        // const crc1 = idat[_j++];
+        // const crc2 = idat[_j++];
+        // const crc3 = idat[_j++];
+        // console.log('crc', crc0, crc1, crc2, crc3); // @DELETEME
+      }
+
     }
 
     /* JPEG glitch */
@@ -109,14 +141,14 @@ function d2h(decimal) {
 }
 
 function glitch(dataUrl, option) {
-  const { iSkip = [], jSkip = [] } = option;
-  const bytes = base64ToByteArray(dataUrl);
-  const [beforeDA, afterDA] = splitWith0xDA(bytes);
-  const [daArray, ffArray] = parseDataChunk(afterDA);
-  const headerArray = beforeDA.concat(daArray);
+  const {iSkip = [], jSkip = []} = option;
+  const bytes                    = base64ToByteArray(dataUrl);
+  const [beforeDA, afterDA]      = splitWith0xDA(bytes);
+  const [daArray, ffArray]       = parseDataChunk(afterDA);
+  const headerArray              = beforeDA.concat(daArray);
 
   const glitchedFFArray = corrupt(ffArray, iSkip, jSkip);
-  const glitchedArray = headerArray.concat(glitchedFFArray);
+  const glitchedArray   = headerArray.concat(glitchedFFArray);
   const glitchedDataURL = byteArrayToBase64(glitchedArray);
 
   return glitchedDataURL;
