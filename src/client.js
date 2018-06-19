@@ -11,6 +11,7 @@ import parseDataChunk from './parseDataChunk.js';
 import byteArrayToBase64 from './byteArrayToBase64.js';
 import corrupt from './corrupt.js';
 import zlib from 'zlib';
+import DataPNG from './DataPNG.js'
 
 window.onload = () => {
   const canvas = document.getElementById('c');
@@ -32,6 +33,21 @@ window.onload = () => {
 
     function pngGlitch(base64) {
       const byteArray = base64ToByteArray(base64);
+      const png = new DataPNG(byteArray);
+      png.parse();
+      png.decompressIDAT()
+        .then(()=>{
+          png.glitch();
+          png.compressIDAT()
+            .then(()=>{
+              png.build();
+              const dataURL = png.toDataURL();
+            });
+        })
+        .catch((r)=>{
+         console.error(r);
+        });
+      console.log(png);
       splitWith0x490x440x410x54IDAT(byteArray);
       const glitchedByteArray = byteArray;
       const glitchedBase64 = byteArrayToBase64(glitchedByteArray);
@@ -40,6 +56,7 @@ window.onload = () => {
     }
 
     function splitWith0x490x440x410x54IDAT(byteArray) {
+
       const header = [];
       const idatArray = [];
       let writeIndex = 0;
@@ -110,14 +127,11 @@ window.onload = () => {
         if (e) {
           console.error(e);
         }
-        console.log(imageData);
-
         const height = 512;
         const width = 512;
         const bitPerPixel = 4;
         for (let i_h = 0; i_h < height; i_h++) {
           const rowHead = (i_h * (width * bitPerPixel + 1));
-          console.log(imageData[rowHead]);
         }
 
       });
@@ -146,11 +160,6 @@ window.onload = () => {
     // }
   };
 };
-
-function d2h(decimal) {
-  let hex = `0x${decimal.toString(16).toUpperCase()}`;
-  return hex;
-}
 
 function glitch(dataUrl, option) {
   const { iSkip = [], jSkip = [] } = option;
