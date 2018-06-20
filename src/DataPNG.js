@@ -40,9 +40,11 @@ class DataPNG {
     const byteArray = this.byteArray;
     for (this.needle = 0; this.needle < byteArray.length; this.needle++) {
       if (this.isIHDR()) {
-        this.needle += this.readIHDR();
+        this.readIHDR();
+        // this.needle += this.readIHDR();
       } else if (this.isIDAT()) {
-        this.needle += this.readIDAT();
+        this.readIDAT();
+        // this.needle += this.readIDAT();
       }
     }
   }
@@ -57,6 +59,7 @@ class DataPNG {
       zlib.inflate(this.idat, (e, imageData) => {
         if (e) {
           reject(e);
+          return false;
         }
         this.idat = imageData;
         this.inflated = true;
@@ -73,6 +76,7 @@ class DataPNG {
       zlib.deflate(this.idat, (e, compressed) => {
         if (e) {
           reject(e);
+          return false;
         }
         this.idat = compressed;
         this.inflated = false;
