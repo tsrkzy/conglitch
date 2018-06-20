@@ -214,11 +214,12 @@ class DataPNG {
     offset += BYTES_FILTER_METHOD
     this.interace = data[offset];
     offset += BYTES_INTERACE_METHOD;
-    // const crc = data.slice(offset, offset + BYTES_CRC);
-    // console.log('raw crc:', crc);
-    // const seed = data.slice(BYTES_LENGTH, BYTES_LENGTH + BYTES_TYPE + 13)
-    // console.log('seed:', seed);
-    // console.log(crc32(seed, true));
+
+    const crc = data.slice(offset, offset + BYTES_CRC);
+    console.log('raw crc:', crc);
+    const seed = data.slice(BYTES_LENGTH, BYTES_LENGTH + BYTES_TYPE + 13)
+    console.log('seed:', seed);
+    console.log('generated crc: ',crc32(seed, true));
     this.ihdr = data;
   }
 
