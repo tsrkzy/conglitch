@@ -100,7 +100,6 @@ class Chunk {
           this.glitchProcess();
           this.compressData()
             .then(() => {
-              console.log('after decompress&compress');
               this.updateCrc();
               resolve();
             })
@@ -130,7 +129,6 @@ class Chunk {
     }
 
     const data = new Uint8Array(this.data);
-    const buffer = Buffer.from(data);
     return new Promise((resolve) => {
       zlib.deflate(data, (e, deflated) => {
         if (e) {
@@ -140,7 +138,7 @@ class Chunk {
         /* v6系ではBufferしか扱えない */
         this.data = deflated;
         this.inflated = false;
-        console.log('comp,length', this.data, this.data.length);
+        // console.log('comp,length', this.data, this.data.length);
         resolve();
       });
     });
@@ -153,12 +151,11 @@ class Chunk {
     if (this.inflated) {
       throw new Error('cannot inflate twice.')
     }
-    
+
     /* ArrayBuffer to Buffer */
     const data = new Uint8Array(this.data);
-    const buffer = Buffer.from(data);
     return new Promise((resolve) => {
-      zlib.inflate(buffer, (e, inflated) => {
+      zlib.inflate(data, (e, inflated) => {
         if (e) {
           throw e;
         }
@@ -211,7 +208,7 @@ class DataPNG {
         case 'IHDR':
           break;
         case 'IDAT':
-          console.log('before decompress&compress', chunk.data.length);
+          // console.log('before decompress&compress', chunk.data.length);
           chunk.updateCrc();
           const process = chunk.glitch();
           processList.push(process);
