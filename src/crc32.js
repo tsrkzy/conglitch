@@ -87,8 +87,4 @@ class CRC {
   }
 }
 
-
-
-
-
 module.exports = crc32;

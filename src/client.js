@@ -17,7 +17,8 @@ window.onload = () => {
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
   const image = new Image();
-  image.src = './lena_512.jpg';
+  // image.src = './lena_512.jpg';
+  image.src = './test_256.png';
   image.onload = () => {
     ctx.drawImage(image, 0, 0);
     /* PNG */
@@ -25,7 +26,7 @@ window.onload = () => {
     const img = new Image();
     const glitchedDataURL = pngGlitch(base64Full);
     img.src = glitchedDataURL;
-    img.width = 512;
+    img.width = 256;
     img.onload = () => {
       const body = document.body;
       body.appendChild(img);
@@ -34,20 +35,15 @@ window.onload = () => {
     function pngGlitch(base64) {
       const byteArray = base64ToByteArray(base64);
       const png = new DataPNG(byteArray);
-      png.parse();
-      png.decompressIDAT()
-        .then(()=>{
-          png.glitch();
-          png.compressIDAT()
-            .then(()=>{
-              png.build();
-              const dataURL = png.toDataURL();
-            });
+      png.parse()
+        .then(() => {
+          console.log(png);
         })
-        .catch((r)=>{
-         console.error(r);
+        .catch(() => {
+          throw e;
         });
-      console.log(png);
+      return false;
+      
       splitWith0x490x440x410x54IDAT(byteArray);
       const glitchedByteArray = byteArray;
       const glitchedBase64 = byteArrayToBase64(glitchedByteArray);
@@ -127,8 +123,8 @@ window.onload = () => {
         if (e) {
           console.error(e);
         }
-        const height = 512;
-        const width = 512;
+        const height = 256;
+        const width = 256;
         const bitPerPixel = 4;
         for (let i_h = 0; i_h < height; i_h++) {
           const rowHead = (i_h * (width * bitPerPixel + 1));

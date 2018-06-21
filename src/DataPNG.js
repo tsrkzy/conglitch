@@ -3,8 +3,11 @@
 import zlib from 'zlib';
 import crc32 from './crc32.js';
 
+const BYTES_SIGNATURE = 8;
 const BYTES_LENGTH = 4;
 const BYTES_TYPE = 4;
+const BYTES_OFFSET_TYPE = BYTES_LENGTH;
+const BYTES_OFFSET_DATA = BYTES_LENGTH + BYTES_TYPE;
 const BYTES_CRC = 4;
 const BYTES_WIDTH = 4;
 const BYTES_HEIGHT = 4;
@@ -14,16 +17,170 @@ const BYTES_COMPRESS_METHOD = 1;
 const BYTES_FILTER_METHOD = 1;
 const BYTES_INTERACE_METHOD = 1;
 
+const ITERATION_LIMIT_READ_CHUNK = 5000;
+
 const GRAYSCALE = { key: 0, bpp: 1 };
 const TRUE_COLOR = { key: 2, bpp: 1 };
 const INDEXED = { key: 3, bpp: 2 };
 const GRAYSCALE_ALPHA = { key: 4, bpp: 3 };
 const TRUE_COLOR_ALPHA = { key: 6, bpp: 4 };
 
+class Chunk {
+  constructor(byteArray, index) {
+    this.length = this.readLength(byteArray, index);
+    this.type = this.readType(byteArray, index);
+    this.data = this.readData(byteArray, index);
+    this.crc = this.readCrc(byteArray, index);
+    this.inflated = false;
+  }
+
+  readLength(byteArray, index) {
+    const start = index;
+    const end = start + BYTES_LENGTH;
+    const length = byteArray.slice(start, end);
+
+    return length;
+  }
+
+  readType(byteArray, index) {
+    const start = index + BYTES_OFFSET_TYPE;
+    const end = start + BYTES_TYPE;
+    const type = byteArray.slice(start, end);
+
+    return type;
+  }
+
+  readData(byteArray, index) {
+    const length = this.getLengthAsInt();
+    const start = index + BYTES_OFFSET_DATA;
+    const end = start + length;
+    const data = byteArray.slice(start, end);
+
+    return data;
+  }
+  readCrc(byteArray, index) {
+    const crcOffset = BYTES_OFFSET_DATA + this.getLengthAsInt();
+    const start = index + crcOffset;
+    const end = start + BYTES_CRC;
+    const crc = byteArray.slice(start, end);
+
+    return crc;
+  }
+
+  /**
+   * @return {number}
+   */
+  getTotalLength() {
+    const totalLength = BYTES_LENGTH + BYTES_TYPE + this.getLengthAsInt() + BYTES_CRC;
+    return totalLength;
+  }
+
+  /**
+   * @return {number}
+   */
+  getLengthAsInt() {
+    const l = this.length;
+    const length = ((l[0] << 24) + (l[1] << 16) + (l[2] << 8) + (l[3]));
+    return length;
+  }
+
+  getTypeAsString() {
+    const t = this.type;
+    const type = t.map((c) => String.fromCodePoint(c)).join('');
+    return type
+  }
+
+  /**
+   * @return {Promise}
+   */
+  glitch() {
+    return new Promise((resolve) => {
+      this.decompressData()
+        .then(() => {
+          this.glitchProcess();
+          this.compressData()
+            .then(() => {
+              console.log('after decompress&compress');
+              this.updateCrc();
+              resolve();
+            })
+        })
+        .catch((e) => {
+          throw e;
+        })
+    })
+  }
+
+  glitchProcess() {
+
+  }
+
+  updateCrc() {
+    const target = this.type.concat(this.data);
+    const crc = crc32(target);
+    // console.log('crc,type,data', crc, this.type, this.data);
+  }
+
+  /**
+   * @return {Promise}
+   */
+  compressData() {
+    if (!this.inflated) {
+      throw new Error('already compressed.')
+    }
+
+    const data = new Uint8Array(this.data);
+    const buffer = Buffer.from(data);
+    return new Promise((resolve) => {
+      zlib.deflate(data, (e, deflated) => {
+        if (e) {
+          throw e;
+        }
+
+        /* v6系ではBufferしか扱えない */
+        this.data = deflated;
+        this.inflated = false;
+        console.log('comp,length', this.data, this.data.length);
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * @return {Promise}
+   */
+  decompressData() {
+    if (this.inflated) {
+      throw new Error('cannot inflate twice.')
+    }
+    
+    /* ArrayBuffer to Buffer */
+    const data = new Uint8Array(this.data);
+    const buffer = Buffer.from(data);
+    return new Promise((resolve) => {
+      zlib.inflate(buffer, (e, inflated) => {
+        if (e) {
+          throw e;
+        }
+
+        this.data = inflated;
+        this.inflated = true;
+        // console.log('decomp,length', this.data, this.data.length);
+        resolve();
+      });
+    });
+  }
+}
+
 class DataPNG {
   constructor(byteArray) {
+    /** @member 入力画像のデータ */
     this.byteArray = byteArray;
+    /** @member this.byteArrayについての走査index */
     this.needle = 0;
+
+    this.signature = null;
+    /** @member IHDRに対応するデータを保持する */
     this.ihdr = null;
     this.width = -1;
     this.height = -1;
@@ -38,13 +195,50 @@ class DataPNG {
 
   parse() {
     const byteArray = this.byteArray;
-    for (this.needle = 0; this.needle < byteArray.length; this.needle++) {
+    this.signature = byteArray.slice(0, BYTES_SIGNATURE);
+
+    const length = byteArray.length;
+    let i = BYTES_SIGNATURE;
+    let limit = 0
+    const processList = [];
+    while (length > i) {
+      const chunk = new Chunk(byteArray, i);
+      const totalLength = chunk.getTotalLength();
+      const type = chunk.getTypeAsString();
+      console.log('i, type, total, chunk: ', i, type, totalLength, chunk);
+
+      switch (type) {
+        case 'IHDR':
+          break;
+        case 'IDAT':
+          console.log('before decompress&compress', chunk.data.length);
+          chunk.updateCrc();
+          const process = chunk.glitch();
+          processList.push(process);
+          break;
+        case 'IEND':
+
+          break;
+      }
+
+      i += totalLength
+
+      limit++;
+      if (limit > ITERATION_LIMIT_READ_CHUNK) {
+        throw new Error(`exceed iteration limit: ${ITERATION_LIMIT_READ_CHUNK}. is this broken file?`);
+      }
+    };
+
+    return Promise.all(processList)
+
+
+    return false;
+
+    for (this.needle = BYTES_SIGNATURE; this.needle < byteArray.length; this.needle++) {
       if (this.isIHDR()) {
         this.readIHDR();
-        // this.needle += this.readIHDR();
       } else if (this.isIDAT()) {
         this.readIDAT();
-        // this.needle += this.readIDAT();
       }
     }
   }
@@ -69,7 +263,7 @@ class DataPNG {
     });
     return p;
   }
-  
+
   compressIDAT() {
     this.idat = new Uint8Array(this.idat);
     const p = new Promise((resolve, reject) => {
@@ -219,7 +413,7 @@ class DataPNG {
     console.log('raw crc:', crc);
     const seed = data.slice(BYTES_LENGTH, BYTES_LENGTH + BYTES_TYPE + 13)
     console.log('seed:', seed);
-    console.log('generated crc: ',crc32(seed, true));
+    console.log('generated crc: ', crc32(seed, true));
     this.ihdr = data;
   }
 
