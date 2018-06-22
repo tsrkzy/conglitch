@@ -1,7 +1,8 @@
 'use strict';
 
 import zlib from 'zlib';
-import crc32 from './crc32.js';
+import byteArrayToBase64 from './byteArrayToBase64.js';
+import { crc32, intBytes } from './crc32.js';
 
 const BYTES_SIGNATURE = 8;
 const BYTES_LENGTH = 4;
@@ -110,8 +111,17 @@ class Chunk {
     })
   }
 
+  /**
+   * 
+   */
   glitchProcess() {
-
+    const uint8Array = this.data;
+    console.log(uint8Array.length);
+    for (let i = 0; i < uint8Array.length; i++) {
+      if (i % (4 * 256 + 1) === 0) {
+        uint8Array[i] = 4;
+      }
+    }
   }
 
   updateCrc() {
@@ -128,6 +138,7 @@ class Chunk {
       throw new Error('already compressed.')
     }
 
+    /* Array to TypedArray(ArrayBuffer) */
     const data = new Uint8Array(this.data);
     return new Promise((resolve) => {
       zlib.deflate(data, (e, deflated) => {
@@ -152,7 +163,7 @@ class Chunk {
       throw new Error('cannot inflate twice.')
     }
 
-    /* ArrayBuffer to Buffer */
+    /* Array to TypedArray(ArrayBuffer) */
     const data = new Uint8Array(this.data);
     return new Promise((resolve) => {
       zlib.inflate(data, (e, inflated) => {
@@ -166,6 +177,21 @@ class Chunk {
         resolve();
       });
     });
+  }
+
+  serialize() {
+    this.updateLength();
+    const serial = [];
+    const length = this.length;
+    const type = this.type;
+    const data = Array.from(this.data);
+    const crc = this.crc;
+
+    return serial.concat(length, type, data, crc);
+  }
+
+  updateLength() {
+    this.length = intBytes(this.data.length);
   }
 }
 
@@ -188,6 +214,7 @@ class DataPNG {
     // this.interace = -1;
     this.idat = [];
     this.inflated = false;
+    this.dest = null;
   }
 
   parse() {
@@ -206,15 +233,18 @@ class DataPNG {
 
       switch (type) {
         case 'IHDR':
+          this.ihdr = chunk;
+          
           break;
         case 'IDAT':
           // console.log('before decompress&compress', chunk.data.length);
-          chunk.updateCrc();
           const process = chunk.glitch();
+          this.idat = this.idat || [];
+          this.idat.push(chunk)
           processList.push(process);
           break;
         case 'IEND':
-
+          this.iend = chunk;
           break;
       }
 
@@ -280,20 +310,28 @@ class DataPNG {
   }
 
   build() {
-    const signature = [];
-    const ihdrSiz = [];
-    const ihdrType = [];
-    const ihdrData = this.ihdr;
-    const ihdrCrc = [];
-    const idatSiz = [];
-    const idatType = [];
-    const idatData = this.idat;
-    const idatCrc = [];
-    const iendSiz = [];
-    const iendType = [];
-    const iendData = [];
-    const iendCrc = [];
+    const png = [];
+    const signature = this.signature;
+    const ihdr = this.ihdr.serialize();
+    const idat = (() => {
+      const idat = this.idat;
+      let byteArray = [];
+      for (let i = 0; i < idat.length; i++) {
+        const dat = idat[i];
+        byteArray = byteArray.concat(dat.serialize());
+      }
+      return byteArray;
+    })();
+    const iend = this.iend.serialize();
+    // console.log(signature, ihdr, idat, iend);
+    this.dest = png.concat(signature, ihdr, idat, iend);
+  }
 
+  toDataUrl() {
+    const byteArray = this.dest;
+    const dataUrl = byteArrayToBase64(byteArray);
+    // console.log(dataUrl);
+    return dataUrl
   }
 
   glitch() {

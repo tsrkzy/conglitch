@@ -87,4 +87,4 @@ class CRC {
   }
 }
 
-module.exports = crc32;
+module.exports = { crc32, intBytes };

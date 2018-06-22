@@ -24,31 +24,36 @@ window.onload = () => {
     /* PNG */
     const base64Full = canvas.toDataURL('image/png');
     const img = new Image();
-    const glitchedDataURL = pngGlitch(base64Full);
-    img.src = glitchedDataURL;
-    img.width = 256;
-    img.onload = () => {
-      const body = document.body;
-      body.appendChild(img);
-    };
+    pngGlitch(base64Full)
+      .then((dataUrl)=>{
+        console.log(dataUrl);
+        img.src = dataUrl;
+        img.width = 256;
+        img.onload = () => {
+          console.log('loaded!!');
+          const body = document.body;
+          body.appendChild(img);
+        };  
+      })
+      .catch((e) => {
+     throw e
+    })
 
     function pngGlitch(base64) {
       const byteArray = base64ToByteArray(base64);
       const png = new DataPNG(byteArray);
-      png.parse()
-        .then(() => {
-          console.log(png);
-        })
-        .catch(() => {
-          throw e;
-        });
-      return false;
-      
-      splitWith0x490x440x410x54IDAT(byteArray);
-      const glitchedByteArray = byteArray;
-      const glitchedBase64 = byteArrayToBase64(glitchedByteArray);
-
-      return glitchedBase64;
+      return new Promise((resolve) => {
+        png.parse()
+          .then(() => {
+            console.log(png);
+            png.build();
+            const dataUrl = png.toDataUrl();
+            resolve(dataUrl);
+          })
+          .catch(() => {
+            throw e;
+          });
+      })
     }
 
     function splitWith0x490x440x410x54IDAT(byteArray) {
