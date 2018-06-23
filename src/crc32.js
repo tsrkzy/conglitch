@@ -8,8 +8,24 @@ function crc32(byteArray = []) {
   return crc;
 }
 
-function intBytes(i) {
-  return [(i >>> 24) & 0xFF, (i >>> 16) & 0xFF, (i >>> 8) & 0xFF, i & 0xFF];
+/**
+ * 255 -> [0, 0, 15, 15]
+ *
+ * @param {number} decimal
+ * @returns {Array<number>} - hexDecimal Array
+ */
+function intBytes(decimal) {
+  return [(decimal >>> 24) & 0xFF, (decimal >>> 16) & 0xFF, (decimal >>> 8) & 0xFF, decimal & 0xFF];
+}
+
+/**
+ * 配列形式の4桁の10進数表記の16進数を、10進数へ変換する
+ * @param {Array<number>} hex
+ * @return {number}
+ */
+function intBytesToDecimal(hex) {
+  const decimal = (hex[0] << 24 | hex[1] << 16 | hex[2] << 8 | hex[3]) >>> 0;
+  return decimal;
 }
 
 function calcCRC32(byteArray, start, end) {
@@ -87,4 +103,4 @@ class CRC {
   }
 }
 
-module.exports = { crc32, intBytes };
+module.exports = { crc32, intBytes ,intBytesToDecimal};
