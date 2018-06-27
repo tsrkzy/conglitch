@@ -7,6 +7,7 @@ import parseDataChunk from './parseDataChunk.js';
 import byteArrayToBase64 from './byteArrayToBase64.js';
 import corrupt from './corrupt.js';
 import PNG_Container from './PNG_Container.js';
+import JPEG_Container from './JPEG_Container.js';
 
 window.onload = () => {
   const image = new Image();
@@ -14,53 +15,53 @@ window.onload = () => {
   // image.src = './lena_256.png';
   // image.src = './test_256.png';
   // image.src = './test.jpeg';
-  image.src = './olympus_01_300.jpg';
+  image.src    = './olympus_01_300.jpg';
   // image.src = './olympus_01_cloned.jpg';
   image.onload = () => {
-    const { width, height } = image;
-    console.log('image:',width,height); // @DELETEME
-    const canvas = document.getElementById('c');
-    canvas.style.width = width;
+    const {width, height} = image;
+    console.log('image:', width, height); // @DELETEME
+    const canvas        = document.getElementById('c');
+    canvas.style.width  = width;
     canvas.style.height = height;
-    const ctx = canvas.getContext('2d');
+    const ctx           = canvas.getContext('2d');
     ctx.drawImage(image, 0, 0);
     /* PNG */
-    const base64Full = canvas.toDataURL('image/png');
-    const img = new Image();
-    pngGlitch(base64Full)
-      .then((png) => {
-        const dataUrl = png.toDataUrl();
-        const { width, height } = png;
-        console.log(dataUrl);
-        img.src = dataUrl;
-        img.width = width;
-        img.height = height;
-        img.onload = () => {
-          console.log('loaded!!');
-          const body = document.body;
-          body.appendChild(img);
-        };
-      })
-      .catch((e) => {
-        throw e;
-      });
-
-    function pngGlitch(base64) {
-      const byteArray = base64ToByteArray(base64);
-      const png = new PNG_Container(byteArray);
-      return new Promise((resolve) => {
-        png.parse()
-          .then(() => {
-            console.log(png);
-            png.build();
-
-            resolve(png);
-          })
-          .catch((e) => {
-            throw e;
-          });
-      });
-    }
+    // const base64Full = canvas.toDataURL('image/png');
+    // const img = new Image();
+    // pngGlitch(base64Full)
+    //   .then((png) => {
+    //     const dataUrl = png.toDataUrl();
+    //     const { width, height } = png;
+    //     console.log(dataUrl);
+    //     img.src = dataUrl;
+    //     img.width = width;
+    //     img.height = height;
+    //     img.onload = () => {
+    //       console.log('loaded!!');
+    //       const body = document.body;
+    //       body.appendChild(img);
+    //     };
+    //   })
+    //   .catch((e) => {
+    //     throw e;
+    //   });
+    //
+    // function pngGlitch(base64) {
+    //   const byteArray = base64ToByteArray(base64);
+    //   const png = new PNG_Container(byteArray);
+    //   return new Promise((resolve) => {
+    //     png.parse()
+    //       .then(() => {
+    //         console.log(png);
+    //         png.build();
+    //
+    //         resolve(png);
+    //       })
+    //       .catch((e) => {
+    //         throw e;
+    //       });
+    //   });
+    // }
 
     /* JPEG glitch */
     // const base64Full = canvas.toDataURL('image/jpeg');
@@ -83,18 +84,25 @@ window.onload = () => {
     //     };
     //   }
     // }
+
+    const base64Full = canvas.toDataURL('image/jpeg');
+    const byteArray  = base64ToByteArray(base64Full);
+    const jpeg  = new JPEG_Container(byteArray);
+    jpeg.parse();
+    console.log(jpeg); // @DELETEME
+
   };
 };
 
 function glitch(dataUrl, option) {
-  const { iSkip = [], jSkip = [] } = option;
-  const bytes = base64ToByteArray(dataUrl);
-  const [beforeDA, afterDA] = splitWith0xDA(bytes);
-  const [daArray, ffArray] = parseDataChunk(afterDA);
-  const headerArray = beforeDA.concat(daArray);
+  const {iSkip = [], jSkip = []} = option;
+  const bytes                    = base64ToByteArray(dataUrl);
+  const [beforeDA, afterDA]      = splitWith0xDA(bytes);
+  const [daArray, ffArray]       = parseDataChunk(afterDA);
+  const headerArray              = beforeDA.concat(daArray);
 
   const glitchedFFArray = corrupt(ffArray, iSkip, jSkip);
-  const glitchedArray = headerArray.concat(glitchedFFArray);
+  const glitchedArray   = headerArray.concat(glitchedFFArray);
   const glitchedDataURL = byteArrayToBase64(glitchedArray);
 
   return glitchedDataURL;

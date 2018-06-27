@@ -8,7 +8,7 @@ function base64ToByteArray(base64String) {
   }
 
   /* peel MIME type */
-  const base64 = /([a-zA-Z0-9+\/]+)=+$/.exec(base64String)[1];
+  const base64 = /([a-zA-Z0-9+\/]+)=*$/.exec(base64String)[1];
 
   const bytes = [];
   const len = base64.length;

@@ -25,8 +25,6 @@ class PNG_Container {
   constructor(byteArray) {
     /** @member {Array} 入力画像のデータ */
     this.byteArray = byteArray;
-    /** @member {number} this.byteArrayについての走査index */
-    this.needle = 0;
 
     this.signature = null;
     /** @member IHDRに対応するデータを保持する */
