@@ -1,21 +1,30 @@
 import React from 'react';
 import {
-  Card,
-  Elevation,
+  FileInput,
 } from '@blueprintjs/core';
 import './handler.css';
 
 class Container extends React.Component {
-  render() {
-    const style = {
-      card: {
-      }
-    };
-    return (
-      <Card elevation={Elevation.ONE} style={style.card}>
+  constructor(...props) {
+    super(...props);
 
-      </Card>
+  }
+
+  render() {
+    return (
+      <div>
+        <FileInput disabled={false} text="Choose file..." onInputChange={this.onInputChangeHandler.bind(this)}/>
+        <img src={'./test.jpeg'}/>
+        <img src={'./test.jpeg'}/>
+        <img src={'./test.jpeg'}/>
+        <img src={'./test.jpeg'}/>
+        <img src={'./test.jpeg'}/>
+      </div>
     );
+  }
+
+  onInputChangeHandler(e) {
+    console.log(e, e.target, e.target.value); // @DELETEME
   }
 }
 

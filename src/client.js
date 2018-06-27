@@ -1,12 +1,21 @@
 'use strict';
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import base64ToByteArray from './base64ToByteArray.js';
 import corrupt from './corrupt.js';
 import PNG_Container from './PNG_Container.js';
 import JPEG_Container from './JPEG_Container.js';
+import Container from './Container.jsx';
 
 window.onload = () => {
+
+  const el = document.getElementById('container');
+  ReactDOM.render(
+    <Container></Container>,
+    el
+  );
+
   const image = new Image();
   // image.src = './lena_512.jpg';
   // image.src = './lena_256.png';
