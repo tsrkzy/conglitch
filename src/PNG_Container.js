@@ -111,7 +111,7 @@ class PNG_Container {
   toDataUrl() {
     const byteArray = this.dest;
     const dataUrl = byteArrayToBase64(byteArray);
-    // console.log(dataUrl);
+
     return dataUrl;
   }
 

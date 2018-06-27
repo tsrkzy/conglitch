@@ -1,5 +1,7 @@
 'use strict';
 
+import byteArrayToBase64 from './byteArrayToBase64';
+
 const BYTES_SOI = 2;
 const BYTES_TYPE = 2;
 const BYTES_LENGTH = 2;
@@ -38,7 +40,7 @@ class JPEG_Container {
       const segment = new Segment(byteArray, i);
       const totalLength = segment.getTotalLength();
       const type = segment.getTypeAsString();
-      console.log('i, type, total, segment:', i, type, totalLength, segment);
+      // console.log('i, type, total, segment:', i, type, totalLength, segment);
 
       i += totalLength;
 
@@ -58,7 +60,6 @@ class JPEG_Container {
   }
 
   parseDataChunk(dataChunk) {
-    console.log('start read dataChunk'); // @DELETEME
     let i = 0;
     let limit = 0;
     const length = dataChunk.length;
@@ -73,7 +74,6 @@ class JPEG_Container {
         break;
       }
 
-      i++;
       limit++;
       if(limit > ITERATION_LIMIT_READ_CHUNK) {
         throw new Error(`exceed iteration limit: ${ITERATION_LIMIT_READ_CHUNK}. is this broken file?`);
@@ -81,6 +81,41 @@ class JPEG_Container {
     }
 
     this.eoi = dataChunk.slice(i, i + BYTES_EOI);
+  }
+
+  build() {
+    let jpeg = [];
+    const soi = this.soi;
+    jpeg = jpeg.concat(soi);
+
+    const segments = this.segments;
+    for (let i = 0; i < segments.length; i++) {
+      let segment = segments[i];
+      const seg = segment.serialize();
+      jpeg = jpeg.concat(seg);
+    }
+    const sos = this.sos;
+    const s = sos.serialize();
+    jpeg = jpeg.concat(s);
+
+    const lines = this.lines;
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      const l = line.serialize();
+      jpeg = jpeg.concat(l);
+    }
+
+    const eoi = this.eoi;
+    jpeg = jpeg.concat(eoi);
+
+    this.dest = jpeg;
+  }
+
+  toDataUrl() {
+    const byteArray = this.dest;
+    const dataUrl = byteArrayToBase64(byteArray);
+
+    return dataUrl;
   }
 }
 
@@ -90,6 +125,7 @@ class Scan {
     this.byteArray = byteArray;
     this.head = index;
     this.index = index;
+    this.marker = [0xFF, 0x00];
     this.data = [];
     this._isNextScan = false;
     this._isEoi = false;
@@ -100,8 +136,10 @@ class Scan {
   }
 
   run() {
+    let firstTime = true;
     let limit = 0;
-    while(!this.isNextScan() && !this.isEoi()) {
+    while (firstTime || (!this.isNextScan() && !this.isEoi())) {
+      firstTime = false;
       this.index++;
       limit++;
       this.updateFlag();
@@ -133,6 +171,10 @@ class Scan {
 
   getLength() {
     return this.data.length;
+  }
+
+  serialize() {
+    return this.data;
   }
 }
 
@@ -193,6 +235,14 @@ class Segment {
     let digit_1 = type[0].toString(16).toUpperCase();
     let digit_2 = type[1].toString(16).toUpperCase();
     return `0x${digit_1}${digit_2}`
+  }
+
+  serialize() {
+    const marker = this.type;
+    const length = this.length;
+    const data = this.data;
+    const segment = [].concat(marker, length, data);
+    return segment;
   }
 }
 
