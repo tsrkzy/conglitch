@@ -11,25 +11,24 @@ import Container from './Container.jsx';
 window.onload = () => {
 
   const el = document.getElementById('container');
-  ReactDOM.render(
-    <Container></Container>,
-    el
-  );
+  ReactDOM.render(<Container></Container>, el);
+
+  return false;
 
   const image = new Image();
   // image.src = './lena_512.jpg';
   // image.src = './lena_256.png';
   // image.src = './test_256.png';
   // image.src = './test.jpeg';
-  image.src    = './olympus_01_300.jpg';
+  image.src = './olympus_01_300.jpg';
   // image.src = './olympus_01_cloned.jpg';
   image.onload = () => {
     const {width, height} = image;
     console.log('image:', width, height); // @DELETEME
-    const canvas        = document.getElementById('c');
+    const canvas = document.getElementById('c');
     canvas.width = width;
     canvas.height = height;
-    const ctx           = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     ctx.drawImage(image, 0, 0);
     /* PNG */
     // const base64Full = canvas.toDataURL('image/png');
@@ -53,8 +52,7 @@ window.onload = () => {
     //   });
     //
     // function pngGlitch(base64) {
-    //   const byteArray = base64ToByteArray(base64);
-    //   const png = new PNG_Container(byteArray);
+    //   const png = new PNG_Container(base64);
     //   return new Promise((resolve) => {
     //     png.parse()
     //       .then(() => {
@@ -71,21 +69,9 @@ window.onload = () => {
 
     (() => {
         const base64Full = canvas.toDataURL('image/jpeg');
-        const byteArray = base64ToByteArray(base64Full);
-        const jpeg = new JPEG_Container(byteArray);
+        const jpeg = new JPEG_Container(base64Full);
         jpeg.parse();
         jpeg.build();
-        {
-          const { byteArray, dest } = jpeg;
-          for (let i = 0; i < byteArray.length; i++) {
-            let b = byteArray[i];
-            if (b !== dest[i]) {
-              console.log(i, b, dest[i]);
-              break;
-            }
-          }
-        }
-
         const dataUrl = jpeg.toDataUrl();
 
         const img = new Image();

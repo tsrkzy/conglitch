@@ -1,6 +1,7 @@
 'use strict';
 
 import byteArrayToBase64 from './byteArrayToBase64';
+import base64ToByteArray from "./base64ToByteArray";
 
 const BYTES_SOI = 2;
 const BYTES_TYPE = 2;
@@ -10,12 +11,14 @@ const BYTES_OFFSET_DATA = 4;
 
 const BYTES_EOI = 2;
 
-const ITERATION_LIMIT_READ_CHUNK = 100;
-const JPEG_SCAN_ITERATION_LIMIT = 1000000;
+const ITERATION_LIMIT_READ_CHUNK = 1024*1024;
+const JPEG_SCAN_ITERATION_LIMIT = 1024*1024;
 
 class JPEG_Container {
-  constructor(byteArray) {
-    this.byteArray = byteArray;
+  constructor(dataUrl) {
+    this.dataUrl = dataUrl;
+    /** @member {Array} 入力画像のデータ */
+    this.byteArray = base64ToByteArray(this.dataUrl);
     this.soi = null;
     this.sos = null;
     this.eoi = null;

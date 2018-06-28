@@ -1,6 +1,7 @@
 'use strict';
 
 import byteArrayToBase64 from './byteArrayToBase64';
+import base64ToByteArray from './base64ToByteArray.js';
 import {intBytesToDecimal} from './crc32';
 import Chunk from './Chunk.js';
 
@@ -22,9 +23,10 @@ const GRAYSCALE_ALPHA = { key: 4, bpp: 3 };
 const TRUE_COLOR_ALPHA = { key: 6, bpp: 4 };
 
 class PNG_Container {
-  constructor(byteArray) {
+  constructor(dataUrl) {
+    this.dataUrl = dataUrl;
     /** @member {Array} 入力画像のデータ */
-    this.byteArray = byteArray;
+    this.byteArray = base64ToByteArray(this.dataUrl);
 
     this.signature = null;
     /** @member IHDRに対応するデータを保持する */
