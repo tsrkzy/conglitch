@@ -7,14 +7,15 @@ import {
 import Toaster from './Toaster.jsx';
 import './handler.css';
 import JPEG_Container from './JPEG_Container.js';
-import {convertToJPEG, convertToPNG} from "./convertFormat.js";
+import { convertToJPEG, convertToPNG } from "./convertFormat.js";
 
 class Container extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      isOpen: true,
       imagePath: '',
-      images   : [
+      images: [
         //  {name, type, size, coordinate: {i,j}, dataUrl, ...}
       ],
     }
@@ -25,12 +26,21 @@ class Container extends React.Component {
       <div>
         <Dialog
           icon="inbox"
-          isOpen={true}
+          isOpen={this.state.isOpen}
           onClose={() => {
+            console.log('close');
+            this.setState({ isOpen: false });
           }}
-          title="Dialog header"
+          canEscapeKeyClose={true}
+          canOutsideClickClose={true}
+          isCloseButtonShown={false}
+          title="使用する画像の選択"
         >
-          <FileInput disabled={false} text="" onInputChange={this.onInputChangeHandler.bind(this)}/>
+          <FileInput
+            disabled={false}
+            text=""
+            onInputChange={this.onInputChangeHandler.bind(this)}
+          />
         </Dialog>
         <div>
           {this.renderImages()}
@@ -41,27 +51,27 @@ class Container extends React.Component {
 
   renderImages() {
     const result = [];
-    const {images} = this.state;
-    for(let i = 0; i < images.length; i++) {
+    const { images } = this.state;
+    for (let i = 0; i < images.length; i++) {
       let image = images[i];
-      const {name, height, width, type, size, coordinate, dataUrl,} = image;
-      const el = <img src={dataUrl} key={i}/>;
+      const { name, height, width, type, size, coordinate, dataUrl, } = image;
+      const el = <img width="150" src={dataUrl} key={i} />;
       result.push(el);
     }
     return result;
   }
 
   onInputChangeHandler(e) {
-    const {files} = e.target;
-    if(files.length === 0) {
+    const { files } = e.target;
+    if (files.length === 0) {
       console.warn('ファイル指定なし');
       return false;
     }
 
     const f = files[0];
-    const {name, type, size} = f;
-    if(/^image\/(bmp|gif|png|jpe?g)/.test(type.toLowerCase()) === false) {
-      Toaster.show({message: 'MIME TYPE MISMATCH: サポートしていない圧縮形式です'});
+    const { name, type, size } = f;
+    if (/^image\/(bmp|gif|png|jpe?g)/.test(type.toLowerCase()) === false) {
+      Toaster.show({ message: 'MIME TYPE MISMATCH: サポートしていない圧縮形式です' });
     }
     console.log(name, type, size); // @DELETEME
 
@@ -77,16 +87,16 @@ class Container extends React.Component {
         this.glitch(convertedBase64)
           .then((arrayOfDataUrl) => {
             const images = [];
-            for(let i = 0; i < arrayOfDataUrl.length; i++) {
+            for (let i = 0; i < arrayOfDataUrl.length; i++) {
               let dataUrl = arrayOfDataUrl[i];
-              const image = {dataUrl};
+              const image = { dataUrl };
               images.push(image);
             }
-            this.setState({images});
+            this.setState({ images });
           })
       })
       .catch((r) => {
-        Toaster.show({message: 'SOMETHING OCCURRED: 処理中にエラーが発生しました'});
+        Toaster.show({ message: 'SOMETHING OCCURRED: 処理中にエラーが発生しました' });
         console.error(r);
       });
   }
@@ -105,16 +115,17 @@ class Container extends React.Component {
     pAll.push(pRaw);
 
     /* JPEG glitch */
-    const p = new Promise((resolve) => {
-      const jpeg = new JPEG_Container(dataUrl);
-      console.log(jpeg); // @DELETEME
-      jpeg.parse();
-      jpeg.glitch();
-      jpeg.build();
-      const newDataUrl = jpeg.toDataUrl();
-      resolve(newDataUrl);
-    });
-    pAll.push(p);
+    for (let i = 0; i < 40; i++) {
+      const p = new Promise((resolve) => {
+        const jpeg = new JPEG_Container(dataUrl);
+        jpeg.parse();
+        jpeg.glitch();
+        jpeg.build();
+        const newDataUrl = jpeg.toDataUrl();
+        resolve(newDataUrl);
+      });
+      pAll.push(p);
+    }
 
     return Promise.all(pAll)
   }

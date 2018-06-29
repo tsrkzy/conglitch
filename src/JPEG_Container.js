@@ -93,10 +93,14 @@ class JPEG_Container {
     const data = targetLine.data;
     const length = data.length;
     const index = Math.floor((length * Math.random()) % length);
-    const target = data[index];
-    const error = 0xF0;
-    data[index] = (target + error) & 0xFF;
-    console.log(target, data[index]); // @DELETEME
+    
+    // const target = data[index];
+    // const error = 0xF0;
+    // data[index] = (target + error) & 0xFF;
+    
+    // targetLine.data.splice(index, 1);
+
+targetLine.data =  targetLine.data.reverse()
   }
 
   build() {
