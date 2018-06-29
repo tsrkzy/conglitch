@@ -61,7 +61,7 @@ class Container extends React.Component {
     const f = files[0];
     const {name, type, size} = f;
     if(/^image\/(bmp|gif|png|jpe?g)/.test(type.toLowerCase()) === false) {
-      Toaster.show({message: 'MIME TYPE MISMATCH: サポートしていない画像形式です'});
+      Toaster.show({message: 'MIME TYPE MISMATCH: サポートしていない圧縮形式です'});
     }
     console.log(name, type, size); // @DELETEME
 
@@ -97,18 +97,25 @@ class Container extends React.Component {
    */
   glitch(dataUrl) {
     const pAll = [];
+
+    /* through */
+    const pRaw = new Promise((resolve) => {
+      resolve(dataUrl);
+    });
+    pAll.push(pRaw);
+
+    /* JPEG glitch */
     const p = new Promise((resolve) => {
       const jpeg = new JPEG_Container(dataUrl);
       console.log(jpeg); // @DELETEME
       jpeg.parse();
-      console.log(' - parse!'); // @DELETEME
+      jpeg.glitch();
       jpeg.build();
-      console.log(' - build!'); // @DELETEME
       const newDataUrl = jpeg.toDataUrl();
-      console.log(' - to base64!'); // @DELETEME
       resolve(newDataUrl);
     });
     pAll.push(p);
+
     return Promise.all(pAll)
   }
 }
