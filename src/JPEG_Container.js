@@ -35,7 +35,7 @@ class JPEG_Container {
     const length = byteArray.length;
     let i = BYTES_SOI;
     let limit = 0;
-    while(length > i) {
+    while (length > i) {
       const segment = new Segment(byteArray, i);
       const totalLength = segment.getTotalLength();
       const type = segment.getTypeAsString();
@@ -43,14 +43,14 @@ class JPEG_Container {
 
       i += totalLength;
 
-      if(segment.isSos()) {
+      if (segment.isSos()) {
         this.sos = segment;
         break;
       }
       this.segments.push(segment);
 
       limit++;
-      if(limit > ITERATION_LIMIT_READ_CHUNK) {
+      if (limit > ITERATION_LIMIT_READ_CHUNK) {
         throw new Error(`exceed iteration limit: ${ITERATION_LIMIT_READ_CHUNK}. is this broken file?`);
       }
     }
@@ -63,18 +63,18 @@ class JPEG_Container {
     let limit = 0;
     const length = dataChunk.length;
     Scan.init();
-    while(length > i) {
+    while (length > i) {
       const line = new Scan(dataChunk, i);
       line.run();
       i = line.index;
       this.lines.push(line);
 
-      if(line.isEoi()) {
+      if (line.isEoi()) {
         break;
       }
 
       limit++;
-      if(limit > ITERATION_LIMIT_READ_CHUNK) {
+      if (limit > ITERATION_LIMIT_READ_CHUNK) {
         throw new Error(`exceed iteration limit: ${ITERATION_LIMIT_READ_CHUNK}. is this broken file?`);
       }
     }
@@ -93,14 +93,65 @@ class JPEG_Container {
     const data = targetLine.data;
     const length = data.length;
     const index = Math.floor((length * Math.random()) % length);
-    
+
     // const target = data[index];
     // const error = 0xF0;
     // data[index] = (target + error) & 0xFF;
-    
+
     // targetLine.data.splice(index, 1);
 
-targetLine.data =  targetLine.data.reverse()
+    targetLine.data = targetLine.data.reverse()
+  }
+
+  glitchError() {
+    const targetLine = (() => {
+      const lines = this.lines;
+      const length = lines.length;
+      const index = Math.floor((length * Math.random()) % length)
+      return lines[index];
+    })();
+
+    const data = targetLine.data;
+    const length = data.length;
+    const index = Math.floor((length * Math.random()) % length);
+
+    const target = data[index];
+    const error = 0xF0;
+    data[index] = (target + error) & 0xFF;
+  }
+
+  glitchSplice() {
+    const targetLine = (() => {
+      const lines = this.lines;
+      const length = lines.length;
+      const index = Math.floor((length * Math.random()) % length)
+      return lines[index];
+    })();
+
+    const data = targetLine.data;
+    const length = data.length;
+    const index = Math.floor((length * Math.random()) % length);
+
+    targetLine.data.splice(index, 1);
+  }
+
+  glitchReverse() {
+    const targetLine = (() => {
+      const lines = this.lines;
+      const length = lines.length;
+      const index = Math.floor((length * Math.random()) % length)
+      return lines[index];
+    })();
+
+    targetLine.data = targetLine.data.reverse()
+  }
+
+  glitchShuffle() {
+    const lines = this.lines;
+    const length = lines.length;
+    const start = Math.floor(Math.random() * (length - 1))
+    const edge = lines.splice(start, 1)[0];
+    lines.unshift(edge);
   }
 
   build() {
@@ -109,7 +160,7 @@ targetLine.data =  targetLine.data.reverse()
     jpeg = jpeg.concat(soi);
 
     const segments = this.segments;
-    for(let i = 0; i < segments.length; i++) {
+    for (let i = 0; i < segments.length; i++) {
       let segment = segments[i];
       const seg = segment.serialize();
       jpeg = jpeg.concat(seg);
@@ -119,7 +170,7 @@ targetLine.data =  targetLine.data.reverse()
     jpeg = jpeg.concat(s);
 
     const lines = this.lines;
-    for(let i = 0; i < lines.length; i++) {
+    for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
       const l = line.serialize();
       jpeg = jpeg.concat(l);

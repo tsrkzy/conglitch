@@ -3,6 +3,10 @@ import {
   FileInput,
   Dialog,
   Button,
+  Card,
+  Elevation,
+  RadioGroup,
+  Radio,
 } from '@blueprintjs/core';
 import Toaster from './Toaster.jsx';
 import './handler.css';
@@ -15,6 +19,7 @@ class Container extends React.Component {
     this.state = {
       isOpen: true,
       imagePath: '',
+      format: 'png',
       images: [
         //  {name, type, size, coordinate: {i,j}, dataUrl, ...}
       ],
@@ -23,28 +28,21 @@ class Container extends React.Component {
 
   render() {
     return (
-      <div>
-        <Dialog
-          icon="inbox"
-          isOpen={this.state.isOpen}
-          onClose={() => {
-            console.log('close');
-            this.setState({ isOpen: false });
-          }}
-          canEscapeKeyClose={true}
-          canOutsideClickClose={true}
-          isCloseButtonShown={false}
-          title="使用する画像の選択"
-        >
-          <FileInput
-            disabled={false}
-            text=""
-            onInputChange={this.onInputChangeHandler.bind(this)}
-          />
-        </Dialog>
-        <div>
-          {this.renderImages()}
-        </div>
+      <div style={{ width: '100%' }}>
+        <Card interactive={false} elevation={Elevation.TWO}>
+          <h5>Conglitch</h5>
+          <p>ボタンを押して画像を選択するか、ドラッグ&ドロップしてください。</p>
+          <Button onClick={() => document.getElementById('i').click()}>画像を選択</Button>
+          <RadioGroup label="出力フォーマット" selectedValue={this.state.format}
+            onChange={(e) => { this.setState({ format: e.target.value }) }} >
+            <Radio label="PNG" value="png" />
+            <Radio label="JPEG" value="jpeg" />
+          </RadioGroup>
+          <input id='i' type='file' onChange={this.onInputChangeHandler.bind(this)} style={{ display: 'none' }} />
+          <div>
+            {this.renderImages()}
+          </div>
+        </Card>
       </div>
     );
   }
@@ -55,7 +53,7 @@ class Container extends React.Component {
     for (let i = 0; i < images.length; i++) {
       let image = images[i];
       const { name, height, width, type, size, coordinate, dataUrl, } = image;
-      const el = <img width="150" src={dataUrl} key={i} />;
+      const el = <img width={width} src={dataUrl} key={i} />;
       result.push(el);
     }
     return result;
@@ -119,7 +117,8 @@ class Container extends React.Component {
       const p = new Promise((resolve) => {
         const jpeg = new JPEG_Container(dataUrl);
         jpeg.parse();
-        jpeg.glitch();
+        jpeg.glitchShuffle();
+        // jpeg.glitch();
         jpeg.build();
         const newDataUrl = jpeg.toDataUrl();
         resolve(newDataUrl);
