@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  FileInput,
-  Dialog,
   Button,
   Card,
   Elevation,
@@ -21,7 +19,7 @@ class Container extends React.Component {
     this.state = {
       isOpen   : true,
       imagePath: '',
-      method   : 'jpeg',
+      method   : 'png',
       format   : 'png',
       images   : [
         //  {name, type, size, coordinate: {i,j}, dataUrl, ...}
@@ -211,9 +209,12 @@ class Container extends React.Component {
       const png = new PNG_Container(dataUrl);
       png.parse()
         .then(() => {
-          png.build();
-          const newDataUrl = png.toDataUrl();
-          resolve(newDataUrl);
+          png.glitch();
+          png.build()
+            .then(() => {
+              const newDataUrl = png.toDataUrl();
+              resolve(newDataUrl);
+            });
         });
     })
   }

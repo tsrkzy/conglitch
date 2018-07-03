@@ -4,7 +4,6 @@ import {
   crc32,
   intBytes,
 } from './crc32.js';
-import zlib from 'zlib';
 
 const BYTES_LENGTH = 4;
 const BYTES_TYPE = 4;
@@ -20,6 +19,22 @@ class Chunk {
     this.data = this.readData(byteArray, index);
     this.crc = this.readCrc(byteArray, index);
     this.inflated = false;
+  }
+
+  /**
+   *
+   * @param byteArray
+   * @return {Chunk}
+   */
+  static createIdatFromData(byteArray) {
+    const length = intBytes(byteArray.length);
+    const type = ['I','D','A','T'].map((c) => c.charCodeAt(0));
+    const data = Array.from(byteArray);
+    const crc = crc32(byteArray);
+    const rawChunk = [].concat(length, type, data, crc);
+    const chunk = new Chunk(rawChunk, 0);
+
+    return chunk;
   }
 
   static init() {
@@ -85,26 +100,10 @@ class Chunk {
 
   /**
    * @param {PNG_Container} png
-   * @return {Promise}
    */
   glitch(png) {
-    return new Promise((resolve) => {
-      this.decompressData()
-        .then(() => {
-          this.glitchProcess(png);
-          this.compressData()
-            .then(() => {
-              this.updateCrc();
-              resolve();
-            });
-        })
-        .catch((e) => {
-          console.log(e);
-          // なんやこれ
-          resolve(e);
-          // throw e;
-        });
-    });
+    this.glitchProcess(png);
+    this.updateCrc();
   }
 
   /**
@@ -126,90 +125,6 @@ class Chunk {
     const crc = crc32(target);
     // console.log('crc,type,data', crc, this.type, this.data);
   }
-
-  /**
-   * node zlib version
-   * @return {Promise}
-   */
-  compressData() {
-    if(!this.inflated) {
-      throw new Error('already compressed.');
-    }
-
-    /* Array to TypedArray(ArrayBuffer) */
-    const data = new Uint8Array(this.data);
-    return new Promise((resolve) => {
-      zlib.deflate(data, (e, deflated) => {
-        if(e) {
-          throw e;
-        }
-
-        this.data = deflated;
-        this.inflated = false;
-        // console.log('comp,length', this.data, this.data.length);
-        resolve();
-      });
-    });
-  }
-
-  // /**
-  //  * imaya zlib version {@link https://github.com/imaya/zlib.js}
-  //  *
-  //  * @returns {Promise<any>}
-  //  */
-  // compressData() {
-  //   const data = new Uint8Array(this.data);
-  //   return new Promise((resolve) => {
-  //     const deflator = new Zlib.Deflate(data);
-  //     const deflated = deflator.compress();
-  //     console.log('comp', this.id, deflated); // @DELETEME
-  //     this.data = deflated;
-  //     this.inflated = false;
-  //     resolve();
-  //   });
-  // }
-
-  /**
-   * nodejs zlib version
-   * @return {Promise}
-   */
-  decompressData() {
-    if(this.inflated) {
-      throw new Error('cannot inflate twice.');
-    }
-
-    /* Array to TypedArray(ArrayBuffer) */
-    const data = new Uint8Array(this.data);
-    return new Promise((resolve) => {
-      zlib.inflate(data, (e, inflated) => {
-        if(e) {
-          throw e;
-        }
-
-        this.data = inflated;
-        this.inflated = true;
-        // console.log('decomp,length', this.data, this.data.length);
-        resolve();
-      });
-    });
-  }
-
-  // /**
-  //  * imaya zlib version {@link https://github.com/imaya/zlib.js}
-  //  *
-  //  * @returns {Promise<any>}
-  //  */
-  // decompressData() {
-  //   const data = new Uint8Array(this.data);
-  //   return new Promise((resolve) => {
-  //     const inflater = new Zlib.RawInflate(data);
-  //     const plain = inflater.decompress();
-  //     console.log('plain', this.id, plain); // @DELETEME
-  //     this.data = plain;
-  //     this.inflated = true;
-  //     resolve();
-  //   });
-  // }
 
   serialize() {
     this.updateLength();
