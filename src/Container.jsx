@@ -6,6 +6,7 @@ import {
   RadioGroup,
   Radio,
   Intent,
+  Popover,
 } from '@blueprintjs/core';
 import Toaster from './Toaster.jsx';
 import Smoke from './Smoke.jsx';
@@ -20,7 +21,7 @@ class Container extends React.Component {
     this.state = {
       isOpen   : true,
       imagePath: '',
-      method   : 'png',
+      method   : 'jpeg',
       format   : 'png',
       images   : [
         //  {name, type, size, coordinate: {i,j}, dataUrl, ...}
@@ -65,18 +66,68 @@ class Container extends React.Component {
     filePicker.click();
   }
 
+  pop(index) {
+    const {images} = this.state;
+    for(let i = 0; i < images.length; i++) {
+      let image = images[i];
+      image.pop = (i === index);
+    }
+    this.setState({images});
+  }
+
   renderImages() {
     const result = [];
     const {images} = this.state;
     for(let i = 0; i < images.length; i++) {
       let image = images[i];
-      const {name, height, width, type, size, coordinate, dataUrl,} = image;
-      const el = (<div key={i}>
-        <img width={width} src={dataUrl}/>
-      </div>);
+      const {dataUrl} = image;
+      const el = (
+        <div key={i} style={{display: 'inline'}}>
+          <Popover isOpen={this.state.images[i].pop}>
+            <img src={dataUrl}
+                 onClick={() => {
+                   this.pop(i)
+                 }}
+                 style={{cursor:'pointer'}}
+            />
+            <div>
+              <div style={{
+                display       : "flex",
+                justifyContent: "center",
+                margin        : 10
+              }}>
+                <Button
+                  style={{marginRight: 10}}
+                  onClick={() => {
+                    this.onClickDownloadHandler.call(this, dataUrl)
+                    this.pop();
+                  }}>
+                  ダウンロード
+                </Button>
+                <Button onClick={() => {
+                  this.onRetryHandler.call(this, dataUrl)
+                  this.pop();
+                }}>
+                  この画像を再度glitchする
+                </Button>
+              </div>
+            </div>
+          </Popover>
+        </div>);
       result.push(el);
     }
     return result;
+  }
+
+  onClickDownloadHandler(dataUrl) {
+    const anchor = document.createElement('A');
+    anchor.setAttribute('download', 'glitched');
+    anchor.href = dataUrl;
+    anchor.click();
+  }
+
+  onRetryHandler(dataUrl) {
+    this.onFileLoadHandler(dataUrl);
   }
 
   onInputChangeHandler(e) {
@@ -100,7 +151,9 @@ class Container extends React.Component {
 
   onFileLoadHandler(e) {
     Smoke.on();
-    const dataUrl = e.target.result;
+    const dataUrl = (typeof e === 'string')
+      ? e
+      : e.target.result;
     const convertForGlitchFn = this.getConvert(this.state.method);
     convertForGlitchFn(dataUrl)
       .then((convertedBase64) => {
