@@ -112,9 +112,9 @@ class Chunk {
    */
   glitchProcess(png) {
     const uint8Array = this.data;
-    const { width, height, bpp } = png;
+    const {width, height, bpp} = png;
 
-    for (let i = 0; i < height; i++) {
+    for(let i = 0; i < height; i++) {
       const rowHeadIndex = i * (bpp * width + 1);
       // filter
       uint8Array[rowHeadIndex] = 4;
@@ -132,7 +132,7 @@ class Chunk {
    * @return {Promise}
    */
   compressData() {
-    if (!this.inflated) {
+    if(!this.inflated) {
       throw new Error('already compressed.');
     }
 
@@ -140,7 +140,7 @@ class Chunk {
     const data = new Uint8Array(this.data);
     return new Promise((resolve) => {
       zlib.deflate(data, (e, deflated) => {
-        if (e) {
+        if(e) {
           throw e;
         }
 
@@ -174,7 +174,7 @@ class Chunk {
    * @return {Promise}
    */
   decompressData() {
-    if (this.inflated) {
+    if(this.inflated) {
       throw new Error('cannot inflate twice.');
     }
 
@@ -182,7 +182,7 @@ class Chunk {
     const data = new Uint8Array(this.data);
     return new Promise((resolve) => {
       zlib.inflate(data, (e, inflated) => {
-        if (e) {
+        if(e) {
           throw e;
         }
 

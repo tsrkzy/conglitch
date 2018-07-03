@@ -7,20 +7,23 @@ import {
   Elevation,
   RadioGroup,
   Radio,
+  Intent,
 } from '@blueprintjs/core';
 import Toaster from './Toaster.jsx';
 import './handler.css';
 import JPEG_Container from './JPEG_Container.js';
-import { convertToJPEG, convertToPNG } from "./convertFormat.js";
+import PNG_Container from './PNG_Container.js';
+import {convertToJPEG, convertToPNG} from "./convertFormat.js";
 
 class Container extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isOpen: true,
+      isOpen   : true,
       imagePath: '',
-      format: 'png',
-      images: [
+      method   : 'jpeg',
+      format   : 'png',
+      images   : [
         //  {name, type, size, coordinate: {i,j}, dataUrl, ...}
       ],
     }
@@ -28,17 +31,26 @@ class Container extends React.Component {
 
   render() {
     return (
-      <div style={{ width: '100%' }}>
+      <div style={{width: '100%'}}>
         <Card interactive={false} elevation={Elevation.TWO}>
           <h5>Conglitch</h5>
           <p>ボタンを押して画像を選択するか、ドラッグ&ドロップしてください。</p>
-          <Button onClick={() => document.getElementById('i').click()}>画像を選択</Button>
-          <RadioGroup label="出力フォーマット" selectedValue={this.state.format}
-            onChange={(e) => { this.setState({ format: e.target.value }) }} >
-            <Radio label="PNG" value="png" />
-            <Radio label="JPEG" value="jpeg" />
+          <Button minimal={true} icon={'add'} intent={Intent.PRIMARY} onClick={this.onClickHandler.bind(this)}>画像を選択</Button>
+          <RadioGroup label="" selectedValue={this.state.method}
+                      onChange={(e) => {
+                        this.setState({method: e.target.value})
+                      }}>
+            <Radio label="PNG形式でglitchする" value="png"/>
+            <Radio label="JPEG形式でglitchする" value="jpeg"/>
           </RadioGroup>
-          <input id='i' type='file' onChange={this.onInputChangeHandler.bind(this)} style={{ display: 'none' }} />
+          <RadioGroup label="" selectedValue={this.state.format}
+                      onChange={(e) => {
+                        this.setState({format: e.target.value})
+                      }}>
+            <Radio label="PNG形式で出力" value="png"/>
+            <Radio label="JPEG形式で出力" value="jpeg"/>
+          </RadioGroup>
+          <input id='i' type='file' onChange={this.onInputChangeHandler.bind(this)} style={{display: 'none'}}/>
           <div>
             {this.renderImages()}
           </div>
@@ -47,29 +59,37 @@ class Container extends React.Component {
     );
   }
 
+  onClickHandler() {
+    const filePicker = document.getElementById('i');
+    filePicker.value = '';
+    filePicker.click();
+  }
+
   renderImages() {
     const result = [];
-    const { images } = this.state;
-    for (let i = 0; i < images.length; i++) {
+    const {images} = this.state;
+    for(let i = 0; i < images.length; i++) {
       let image = images[i];
-      const { name, height, width, type, size, coordinate, dataUrl, } = image;
-      const el = <img width={width} src={dataUrl} key={i} />;
+      const {name, height, width, type, size, coordinate, dataUrl,} = image;
+      const el = (<div key={i}>
+        <img width={width} src={dataUrl}/>
+      </div>);
       result.push(el);
     }
     return result;
   }
 
   onInputChangeHandler(e) {
-    const { files } = e.target;
-    if (files.length === 0) {
+    const {files} = e.target;
+    if(files.length === 0) {
       console.warn('ファイル指定なし');
       return false;
     }
 
     const f = files[0];
-    const { name, type, size } = f;
-    if (/^image\/(bmp|gif|png|jpe?g)/.test(type.toLowerCase()) === false) {
-      Toaster.show({ message: 'MIME TYPE MISMATCH: サポートしていない圧縮形式です' });
+    const {name, type, size} = f;
+    if(/^image\/(bmp|gif|png|jpe?g)/.test(type.toLowerCase()) === false) {
+      Toaster.show({message: 'MIME TYPE MISMATCH: サポートしていない圧縮形式です'});
     }
     console.log(name, type, size); // @DELETEME
 
@@ -80,23 +100,56 @@ class Container extends React.Component {
 
   onFileLoadHandler(e) {
     const dataUrl = e.target.result;
-    convertToJPEG(dataUrl)
+    const convertForGlitchFn = this.getConvert(this.state.method);
+    convertForGlitchFn(dataUrl)
       .then((convertedBase64) => {
         this.glitch(convertedBase64)
           .then((arrayOfDataUrl) => {
-            const images = [];
-            for (let i = 0; i < arrayOfDataUrl.length; i++) {
+            /* output format */
+            const pAll = [];
+            for(let i = 0; i < arrayOfDataUrl.length; i++) {
               let dataUrl = arrayOfDataUrl[i];
-              const image = { dataUrl };
-              images.push(image);
+              const convertFn = this.getConvert(this.state.format);
+              const p = new Promise((resolve) => {
+                convertFn(dataUrl)
+                  .then((dataUrl) => {
+                    const image = {dataUrl};
+                    resolve(image);
+                  });
+              });
+              pAll.push(p);
             }
-            this.setState({ images });
+
+            Promise.all(pAll)
+              .then((images) => {
+                this.setState({images});
+              })
           })
       })
       .catch((r) => {
-        Toaster.show({ message: 'SOMETHING OCCURRED: 処理中にエラーが発生しました' });
+        Toaster.show({message: 'SOMETHING OCCURRED: 処理中にエラーが発生しました'});
         console.error(r);
       });
+  }
+
+  /**
+   *
+   * @param {'png'|'jpeg'} format
+   * @return {convertToPNG|convertToJPEG}
+   */
+  getConvert(format) {
+    let method;
+    switch(format) {
+      case 'png':
+        method = convertToPNG;
+        break;
+      case 'jpeg':
+        method = convertToJPEG;
+        break;
+      default:
+        throw new Error(`invalid format: ${format}`);
+    }
+    return method;
   }
 
   /**
@@ -112,21 +165,57 @@ class Container extends React.Component {
     });
     pAll.push(pRaw);
 
-    /* JPEG glitch */
-    for (let i = 0; i < 40; i++) {
-      const p = new Promise((resolve) => {
-        const jpeg = new JPEG_Container(dataUrl);
-        jpeg.parse();
-        jpeg.glitchShuffle();
-        // jpeg.glitch();
-        jpeg.build();
-        const newDataUrl = jpeg.toDataUrl();
-        resolve(newDataUrl);
-      });
+    /* glitch method */
+    let glitchFn;
+    switch(this.state.method) {
+      case 'png':
+        glitchFn = this.pngGlitch;
+        break;
+      case 'jpeg':
+        glitchFn = this.jpegGlitch;
+        break;
+      default:
+        throw new Error(`invalid method: ${this.state.method}`);
+    }
+    for(let i = 0; i < 40; i++) {
+      const p = glitchFn(dataUrl);
       pAll.push(p);
     }
 
     return Promise.all(pAll)
+  }
+
+  /**
+   * @return {Promise}
+   * @param dataUrl
+   */
+  jpegGlitch(dataUrl) {
+    return new Promise((resolve) => {
+      const jpeg = new JPEG_Container(dataUrl);
+      jpeg.parse();
+      jpeg.glitchShuffle();
+      jpeg.glitch();
+      jpeg.build();
+      const newDataUrl = jpeg.toDataUrl();
+      resolve(newDataUrl);
+    });
+  }
+
+  /**
+   *
+   * @return {Promise}
+   * @param dataUrl
+   */
+  pngGlitch(dataUrl) {
+    return new Promise((resolve) => {
+      const png = new PNG_Container(dataUrl);
+      png.parse()
+        .then(() => {
+          png.build();
+          const newDataUrl = png.toDataUrl();
+          resolve(newDataUrl);
+        });
+    })
   }
 }
 

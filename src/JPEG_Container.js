@@ -11,7 +11,7 @@ const BYTES_EOI = 2;
 const ITERATION_LIMIT_READ_CHUNK = 1024 * 1024;
 
 class JPEG_Container {
-  constructor(dataUrl) {
+  constructor(dataUrl,i) {
     this.dataUrl = dataUrl;
     /** @member {Array} 入力画像のデータ */
     this.byteArray = base64ToByteArray(this.dataUrl);
