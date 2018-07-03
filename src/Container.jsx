@@ -8,6 +8,7 @@ import {
   Intent,
 } from '@blueprintjs/core';
 import Toaster from './Toaster.jsx';
+import Smoke from './Smoke.jsx';
 import './handler.css';
 import JPEG_Container from './JPEG_Container.js';
 import PNG_Container from './PNG_Container.js';
@@ -30,6 +31,7 @@ class Container extends React.Component {
   render() {
     return (
       <div style={{width: '100%'}}>
+        <Smoke/>
         <Card interactive={false} elevation={Elevation.TWO}>
           <h5>Conglitch</h5>
           <p>ボタンを押して画像を選択するか、ドラッグ&ドロップしてください。</p>
@@ -97,6 +99,7 @@ class Container extends React.Component {
   }
 
   onFileLoadHandler(e) {
+    Smoke.on();
     const dataUrl = e.target.result;
     const convertForGlitchFn = this.getConvert(this.state.method);
     convertForGlitchFn(dataUrl)
@@ -121,12 +124,14 @@ class Container extends React.Component {
             Promise.all(pAll)
               .then((images) => {
                 this.setState({images});
+                Smoke.off();
               })
           })
       })
       .catch((r) => {
         Toaster.show({message: 'SOMETHING OCCURRED: 処理中にエラーが発生しました'});
         console.error(r);
+        Smoke.off();
       });
   }
 
@@ -176,6 +181,7 @@ class Container extends React.Component {
         throw new Error(`invalid method: ${this.state.method}`);
     }
     for(let i = 0; i < 40; i++) {
+      Smoke.setTotal(40);
       const p = glitchFn(dataUrl);
       pAll.push(p);
     }
@@ -195,6 +201,7 @@ class Container extends React.Component {
       jpeg.glitch();
       jpeg.build();
       const newDataUrl = jpeg.toDataUrl();
+      Smoke.progress();
       resolve(newDataUrl);
     });
   }
@@ -213,6 +220,7 @@ class Container extends React.Component {
           png.build()
             .then(() => {
               const newDataUrl = png.toDataUrl();
+              Smoke.progress();
               resolve(newDataUrl);
             });
         });

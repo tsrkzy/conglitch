@@ -19,6 +19,7 @@ class Content extends React.Component {
           <title>Conglitch!</title>
         </head>
         <body>
+          <div id="smoke" style={style.container}></div>
           <div id="container" style={style.container}></div>
           <canvas id="c"></canvas>
           <script type="text/javascript" src="./zlib_and_gzip.min.js"></script>
