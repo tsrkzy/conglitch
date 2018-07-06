@@ -28,7 +28,7 @@ class Chunk {
    */
   static createIdatFromData(byteArray) {
     const length = intBytes(byteArray.length);
-    const type = ['I','D','A','T'].map((c) => c.charCodeAt(0));
+    const type = ['I', 'D', 'A', 'T'].map((c) => c.charCodeAt(0));
     const data = Array.from(byteArray);
     const crc = crc32(byteArray);
     const rawChunk = [].concat(length, type, data, crc);
@@ -101,22 +101,45 @@ class Chunk {
   /**
    * @param {PNG_Container} png
    */
-  glitch(png) {
-    this.glitchProcess(png);
+  glitch(png, option) {
+    this.glitchProcess(png, option);
     this.updateCrc();
   }
 
   /**
    * @param {PNG_Container} png
    */
-  glitchProcess(png) {
+  glitchProcess(png, option) {
     const uint8Array = this.data;
     const {width, height, bpp} = png;
+    const {continuity, filter, frequency} = option;
+    let burning = false;
 
     for(let i = 0; i < height; i++) {
       const rowHeadIndex = i * (bpp * width + 1);
-      // filter
-      uint8Array[rowHeadIndex] = 4;
+      const f = uint8Array[rowHeadIndex];
+      const glitch = burning
+        ? ((Math.random() < continuity) ? 1 : 0)
+        : ((Math.random() < frequency) ? 1 : 0);
+      burning = glitch === 1;
+      const newFilter = (glitch === 1)
+        ? filter
+        : f;
+      uint8Array[rowHeadIndex] = newFilter;
+
+      // if(!burning) {
+      //   continue;
+      // }
+      // for(let j = 0; j < bpp * width; j++) {
+      //   const k = j + i;
+      //   const glitch = (Math.random() < 0.1) ? 1 : 0;
+      //   if(glitch === 0) {
+      //     continue;
+      //   }
+      //   const value = uint8Array[rowHeadIndex + k];
+      //   const v = ((value + 128) & 0xFF);
+      //   uint8Array[rowHeadIndex + k] = v;
+      // }
     }
   }
 

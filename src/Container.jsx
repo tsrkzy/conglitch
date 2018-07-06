@@ -11,8 +11,6 @@ import {
 import Toaster from './Toaster.jsx';
 import Smoke from './Smoke.jsx';
 import './handler.css';
-import JPEG_Container from './JPEG_Container.js';
-import PNG_Container from './PNG_Container.js';
 import {convertToJPEG, convertToPNG} from "./convertFormat.js";
 
 class Container extends React.Component {
@@ -21,7 +19,7 @@ class Container extends React.Component {
     this.state = {
       isOpen   : true,
       imagePath: '',
-      method   : 'jpeg',
+      method   : 'png',
       format   : 'png',
       images   : [
         //  {name, type, size, coordinate: {i,j}, dataUrl, ...}
@@ -35,7 +33,7 @@ class Container extends React.Component {
         <Smoke/>
         <Card interactive={false} elevation={Elevation.TWO}>
           <h5>Conglitch</h5>
-          <p>ボタンを押して画像を選択するか、ドラッグ&ドロップしてください。</p>
+          <p>グリッチする画像を選択してください。</p>
           <Button minimal={true} icon={'add'} intent={Intent.PRIMARY} onClick={this.onClickHandler.bind(this)}>画像を選択</Button>
           <RadioGroup label="" selectedValue={this.state.method}
                       onChange={(e) => {
@@ -92,9 +90,11 @@ class Container extends React.Component {
             />
             <div>
               <div style={{
-                display       : "flex",
-                justifyContent: "center",
-                margin        : 10
+                display        : "flex",
+                justifyContent : "center",
+                padding        : 10,
+                borderRadius   : 2,
+                backgroundColor: 'white',
               }}>
                 <Button
                   style={{marginRight: 10}}

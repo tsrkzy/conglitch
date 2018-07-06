@@ -16,13 +16,12 @@ class Content extends React.Component {
     return (
       <html>
         <head>
-          <title>Conglitch!</title>
+          <title>conglitch!</title>
         </head>
         <body>
           <div id="smoke" style={style.container}></div>
           <div id="container" style={style.container}></div>
           <canvas id="c"></canvas>
-          <script type="text/javascript" src="./zlib_and_gzip.min.js"></script>
           <script type="text/javascript" src="./client.bundle.js"></script>
         </body>
       </html>

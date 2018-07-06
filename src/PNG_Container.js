@@ -263,8 +263,11 @@ class PNG_Container {
     this.interlace = interlace[0];
   }
 
-  glitch(){
-    this.idat.glitch(this);
+  glitch() {
+    const filter = 4;
+    const continuity = 0.9;
+    const frequency = 0.02;
+    this.idat.glitch(this, {filter, continuity, frequency});
   }
 }
 
