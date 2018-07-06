@@ -44,8 +44,16 @@ class Container extends React.Component {
             <Radio label="JPEG形式で出力" value="jpeg"/>
           </RadioGroup>
           <input id='i' type='file' onChange={this.onInputChangeHandler.bind(this)} style={{display: 'none'}}/>
-          <div>
+          <div style={{
+            display       : 'flex',
+            flexWrap      : 'wrap',
+            justifyContent: 'space-between',
+          }}>
             {this.renderImages()}
+          </div>
+          <hr/>
+          <div>
+            Released under the MIT license. Copyright (c) 2018 tsrm(lepra-tsr@github)
           </div>
         </Card>
       </div>
@@ -70,33 +78,36 @@ class Container extends React.Component {
   renderImages() {
     const result = [];
     const {images} = this.state;
+    const style = {
+      popOver: {
+        display        : "flex",
+        justifyContent : "center",
+        padding        : 10,
+        borderRadius   : 2,
+        backgroundColor: 'white',
+      }
+    };
     for(let i = 0; i < images.length; i++) {
       let image = images[i];
       const {dataUrl} = image;
       const el = (
-        <div key={i} style={{display: 'inline'}}>
-          <Popover isOpen={this.state.images[i].pop}>
-            <img src={dataUrl}
-                 onClick={() => this.pop(i)}
-                 style={{cursor: 'pointer'}}/>
-            <div>
-              <div style={{
-                display        : "flex",
-                justifyContent : "center",
-                padding        : 10,
-                borderRadius   : 2,
-                backgroundColor: 'white',
-              }}>
-                <Button
-                  style={{marginRight: 10}}
-                  onClick={() => this.onClickDownloadHandler.call(this, dataUrl)}>
-                  ダウンロード
-                </Button>
-                <Button onClick={() => this.onRetryJpegHandler(dataUrl)}> JPEGで再度グリッチ </Button>
-                <Button onClick={() => this.onRetryPngHandler(dataUrl)}> PNGで再度グリッチ </Button>
+        <div key={i} style={{marginBottom:30}}>
+          <Card interactive={true} elevation={Elevation.ZERO} style={{padding: 0}}>
+            <Popover isOpen={this.state.images[i].pop}>
+              <img src={dataUrl} onClick={() => this.pop(i)} style={{cursor: 'pointer'}}/>
+              <div>
+                <div style={style.popOver}>
+                  <Button
+                    style={{marginRight: 10}}
+                    onClick={() => this.onClickDownloadHandler.call(this, dataUrl)}>
+                    ダウンロード
+                  </Button>
+                  <Button onClick={() => this.onRetryJpegHandler(dataUrl)}> JPEGで再度グリッチ </Button>
+                  <Button onClick={() => this.onRetryPngHandler(dataUrl)}> PNGで再度グリッチ </Button>
+                </div>
               </div>
-            </div>
-          </Popover>
+            </Popover>
+          </Card>
         </div>);
       result.push(el);
     }

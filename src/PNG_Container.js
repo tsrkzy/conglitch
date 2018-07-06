@@ -24,7 +24,7 @@ const GRAYSCALE_ALPHA = {key: 4, bpp: 3};
 const TRUE_COLOR_ALPHA = {key: 6, bpp: 4};
 
 const FILTER_ERROR = 4;
-const CONTINUITY = 9;
+const CONTINUITY = 0.9;
 const FREQUENCY = 0.02;
 
 class PNG_Container {

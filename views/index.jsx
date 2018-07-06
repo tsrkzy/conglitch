@@ -16,7 +16,7 @@ class Content extends React.Component {
     return (
       <html>
         <head>
-          <title>conglitch!</title>
+          <title>conglitch</title>
         </head>
         <body>
           <div id="smoke" style={style.container}></div>
