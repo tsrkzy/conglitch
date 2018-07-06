@@ -4,7 +4,6 @@ import {reversedBase64Map} from './base64Util';
 
 function base64ToByteArray(base64String) {
   if (typeof  base64String !== 'string') {
-    console.error(base64String); // @DELETEME
     throw new Error('argument type miss match');
   }
 

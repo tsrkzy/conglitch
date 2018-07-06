@@ -33,7 +33,7 @@ function calcCRC32(byteArray, start, end) {
   crc.update(byteArray, start, end);
   const checksum = crc.crc ^ 0xFFFFFFFF;
   return intBytes(checksum);
-};
+}
 
 /**
  * PNG形式の圧縮では、
@@ -53,7 +53,7 @@ class CRC {
   }
 
   update(array, startPos, endPos) {
-    if (CRC.table == null) {
+    if(CRC.table == null) {
       CRC.makeTable();
     }
 
@@ -62,21 +62,21 @@ class CRC {
 
     let len = endPos - startPos;
     let index = startPos;
-    while (len >= 8) {
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
-      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8)
+    while(len >= 8) {
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
       len -= 8;
     }
-    if (len) {
+    if(len) {
       do {
         crc = table[(crc ^ array[index++]) & 0xFF] ^ (crc >>> 8);
-      } while (--len);
+      } while(--len);
     }
     this.crc = crc;
     return crc;
@@ -88,10 +88,10 @@ class CRC {
    */
   static makeTable() {
     const table = [];
-    for (let n = 0; n < 256; n++) {
+    for(let n = 0; n < 256; n++) {
       let c = n;
-      for (let k = 0; k < 8; k++) {
-        if (c & 1) {
+      for(let k = 0; k < 8; k++) {
+        if(c & 1) {
           c = 0xEDB88320 ^ (c >>> 1);
         } else {
           c = c >>> 1;
@@ -103,4 +103,4 @@ class CRC {
   }
 }
 
-module.exports = { crc32, intBytes ,intBytesToDecimal};
+module.exports = {crc32, intBytes, intBytesToDecimal};
