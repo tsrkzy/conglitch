@@ -35,17 +35,11 @@ class Container extends React.Component {
           <h5>Conglitch</h5>
           <p>グリッチする画像を選択してください。</p>
           <Button minimal={true} icon={'add'} intent={Intent.PRIMARY} onClick={this.onClickHandler.bind(this)}>画像を選択</Button>
-          <RadioGroup label="" selectedValue={this.state.method}
-                      onChange={(e) => {
-                        this.setState({method: e.target.value})
-                      }}>
-            <Radio label="PNG形式でglitchする" value="png"/>
-            <Radio label="JPEG形式でglitchする" value="jpeg"/>
+          <RadioGroup label="" selectedValue={this.state.method} onChange={(e) => this.setState({method: e.target.value})}>
+            <Radio label="PNG形式でグリッチ" value="png"/>
+            <Radio label="JPEG形式でグリッチ" value="jpeg"/>
           </RadioGroup>
-          <RadioGroup label="" selectedValue={this.state.format}
-                      onChange={(e) => {
-                        this.setState({format: e.target.value})
-                      }}>
+          <RadioGroup label="" selectedValue={this.state.format} onChange={(e) => this.setState({format: e.target.value})}>
             <Radio label="PNG形式で出力" value="png"/>
             <Radio label="JPEG形式で出力" value="jpeg"/>
           </RadioGroup>
@@ -83,11 +77,8 @@ class Container extends React.Component {
         <div key={i} style={{display: 'inline'}}>
           <Popover isOpen={this.state.images[i].pop}>
             <img src={dataUrl}
-                 onClick={() => {
-                   this.pop(i)
-                 }}
-                 style={{cursor: 'pointer'}}
-            />
+                 onClick={() => this.pop(i)}
+                 style={{cursor: 'pointer'}}/>
             <div>
               <div style={{
                 display        : "flex",
@@ -98,18 +89,11 @@ class Container extends React.Component {
               }}>
                 <Button
                   style={{marginRight: 10}}
-                  onClick={() => {
-                    this.onClickDownloadHandler.call(this, dataUrl)
-                    this.pop();
-                  }}>
+                  onClick={() => this.onClickDownloadHandler.call(this, dataUrl)}>
                   ダウンロード
                 </Button>
-                <Button onClick={() => {
-                  this.onRetryHandler.call(this, dataUrl)
-                  this.pop();
-                }}>
-                  この画像を再度glitchする
-                </Button>
+                <Button onClick={() => this.onRetryJpegHandler(dataUrl)}> JPEGで再度グリッチ </Button>
+                <Button onClick={() => this.onRetryPngHandler(dataUrl)}> PNGで再度グリッチ </Button>
               </div>
             </div>
           </Popover>
@@ -124,10 +108,25 @@ class Container extends React.Component {
     anchor.setAttribute('download', 'glitched');
     anchor.href = dataUrl;
     anchor.click();
+    this.pop();
   }
 
-  onRetryHandler(dataUrl) {
-    this.onFileLoadHandler(dataUrl);
+  onRetryJpegHandler(dataUrl) {
+    const method = 'jpeg';
+    this.setState({method});
+    this.onRetryHandler.call(this, dataUrl, method);
+    this.pop();
+  }
+
+  onRetryPngHandler(dataUrl) {
+    const method = 'png';
+    this.setState({method});
+    this.onRetryHandler.call(this, dataUrl, method);
+    this.pop();
+  }
+
+  onRetryHandler(dataUrl, method) {
+    this.onFileLoadHandler(dataUrl, method);
   }
 
   onInputChangeHandler(e) {
@@ -148,12 +147,12 @@ class Container extends React.Component {
     reader.readAsDataURL(f);
   }
 
-  onFileLoadHandler(e) {
+  onFileLoadHandler(e, method = this.state.method) {
     Smoke.on();
     const dataUrl = (typeof e === 'string')
       ? e
       : e.target.result;
-    const convertForGlitchFn = this.getConvert(this.state.method);
+    const convertForGlitchFn = this.getConvert(method);
     convertForGlitchFn(dataUrl)
       .then((convertedBase64) => {
         this.glitch(convertedBase64)

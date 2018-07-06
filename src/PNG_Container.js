@@ -23,6 +23,10 @@ const INDEXED = {key: 3, bpp: 2};
 const GRAYSCALE_ALPHA = {key: 4, bpp: 3};
 const TRUE_COLOR_ALPHA = {key: 6, bpp: 4};
 
+const FILTER_ERROR = 4;
+const CONTINUITY = 9;
+const FREQUENCY = 0.02;
+
 class PNG_Container {
   constructor(dataUrl) {
     this.dataUrl = dataUrl;
@@ -264,9 +268,9 @@ class PNG_Container {
   }
 
   glitch() {
-    const filter = 4;
-    const continuity = 0.9;
-    const frequency = 0.02;
+    const filter = FILTER_ERROR;
+    const continuity = CONTINUITY;
+    const frequency = FREQUENCY;
     this.idat.glitch(this, {filter, continuity, frequency});
   }
 }
