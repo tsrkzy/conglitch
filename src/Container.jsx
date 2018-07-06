@@ -53,7 +53,7 @@ class Container extends React.Component {
           </div>
           <hr/>
           <div>
-            Released under the MIT license. Copyright (c) 2018 tsrm(lepra-tsr@github)
+            Released under the MIT license. Copyright (c) 2018 <a href={'https://github.com/lepra-tsr'}>tsrm(lepra-tsr@github)</a>
           </div>
         </Card>
       </div>
