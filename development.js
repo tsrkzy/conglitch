@@ -27,7 +27,9 @@ const distribute = path.resolve(__dirname, 'public');
 module.exports = {
   mode: 'development',
   entry: {
-    client: `${entryPoint}/client.js`
+    client: `${entryPoint}/client.js`,
+    pngWork: `${entryPoint}/pngWork.js`,
+    jpegWork: `${entryPoint}/jpegWork.js`,
   },
   output: {
     path: distribute,

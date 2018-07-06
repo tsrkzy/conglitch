@@ -88,7 +88,7 @@ class Container extends React.Component {
                  onClick={() => {
                    this.pop(i)
                  }}
-                 style={{cursor:'pointer'}}
+                 style={{cursor: 'pointer'}}
             />
             <div>
               <div style={{
@@ -142,7 +142,6 @@ class Container extends React.Component {
     if(/^image\/(bmp|gif|png|jpe?g)/.test(type.toLowerCase()) === false) {
       Toaster.show({message: 'MIME TYPE MISMATCH: サポートしていない圧縮形式です'});
     }
-    console.log(name, type, size); // @DELETEME
 
     const reader = new FileReader();
     reader.onload = this.onFileLoadHandler.bind(this);
@@ -162,16 +161,20 @@ class Container extends React.Component {
             /* output format */
             const pAll = [];
             for(let i = 0; i < arrayOfDataUrl.length; i++) {
-              let dataUrl = arrayOfDataUrl[i];
+              const dataUrl = arrayOfDataUrl[i];
+              const dataUrlArray = dataUrl instanceof Array ? dataUrl : [dataUrl];
               const convertFn = this.getConvert(this.state.format);
-              const p = new Promise((resolve) => {
-                convertFn(dataUrl)
-                  .then((dataUrl) => {
-                    const image = {dataUrl};
-                    resolve(image);
-                  });
-              });
-              pAll.push(p);
+              for(let j = 0; j < dataUrlArray.length; j++) {
+                let dataUrl = dataUrlArray[j];
+                const p = new Promise((resolve) => {
+                  convertFn(dataUrl)
+                    .then((convertedDataUrl) => {
+                      const image = {dataUrl: convertedDataUrl};
+                      resolve(image);
+                    });
+                });
+                pAll.push(p);
+              }
             }
 
             Promise.all(pAll)
@@ -221,64 +224,25 @@ class Container extends React.Component {
     });
     pAll.push(pRaw);
 
-    /* glitch method */
-    let glitchFn;
-    switch(this.state.method) {
-      case 'png':
-        glitchFn = this.pngGlitch;
-        break;
-      case 'jpeg':
-        glitchFn = this.jpegGlitch;
-        break;
-      default:
-        throw new Error(`invalid method: ${this.state.method}`);
-    }
-    for(let i = 0; i < 40; i++) {
-      Smoke.setTotal(40);
-      const p = glitchFn(dataUrl);
+    const processCount = navigator.hardwareConcurrency;
+    const taskPerProcess = 10;
+    for(let i = 0; i < processCount; i++) {
+      let p = new Promise((resolve) => {
+        const w = new Worker(`${this.state.method}Work.bundle.js`);
+        const task = {dataUrl, taskPerProcess};
+        w.onmessage = (e) => {
+          const newDataUrlArray = e.data;
+          resolve(newDataUrlArray);
+          w.terminate();
+        };
+        w.postMessage(task);
+      });
       pAll.push(p);
     }
 
     return Promise.all(pAll)
   }
 
-  /**
-   * @return {Promise}
-   * @param dataUrl
-   */
-  jpegGlitch(dataUrl) {
-    return new Promise((resolve) => {
-      const jpeg = new JPEG_Container(dataUrl);
-      jpeg.parse();
-      jpeg.glitchShuffle();
-      jpeg.glitch();
-      jpeg.build();
-      const newDataUrl = jpeg.toDataUrl();
-      Smoke.progress();
-      resolve(newDataUrl);
-    });
-  }
-
-  /**
-   *
-   * @return {Promise}
-   * @param dataUrl
-   */
-  pngGlitch(dataUrl) {
-    return new Promise((resolve) => {
-      const png = new PNG_Container(dataUrl);
-      png.parse()
-        .then(() => {
-          png.glitch();
-          png.build()
-            .then(() => {
-              const newDataUrl = png.toDataUrl();
-              Smoke.progress();
-              resolve(newDataUrl);
-            });
-        });
-    })
-  }
 }
 
 module.exports = Container;
