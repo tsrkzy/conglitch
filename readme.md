@@ -22,3 +22,7 @@ npm run build
 # start server
 npm start
 ```
+
+# License
+
+MIT
