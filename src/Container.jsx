@@ -53,7 +53,8 @@ class Container extends React.Component {
           </div>
           <hr/>
           <div>
-            Released under the MIT license. Copyright (c) 2018 <a href={'https://github.com/lepra-tsr'}>tsrm(lepra-tsr@github)</a>
+            <p>Released under the MIT license. Copyright (c) 2018 <a href={'https://github.com/lepra-tsr'}>tsrm(lepra-tsr@github)</a></p>
+            <p>Need <a href={'https://www.google.co.jp/chrome/'}>Google Chrome</a>.</p>
           </div>
         </Card>
       </div>
@@ -102,8 +103,8 @@ class Container extends React.Component {
                     onClick={() => this.onClickDownloadHandler.call(this, dataUrl)}>
                     ダウンロード
                   </Button>
-                  <Button onClick={() => this.onRetryJpegHandler(dataUrl)}> JPEGで再度グリッチ </Button>
-                  <Button onClick={() => this.onRetryPngHandler(dataUrl)}> PNGで再度グリッチ </Button>
+                  <Button onClick={() => this.onRetryJpegHandler(dataUrl)}>JPEGで再度グリッチ</Button>
+                  <Button onClick={() => this.onRetryPngHandler(dataUrl)}>PNGで再度グリッチ</Button>
                 </div>
               </div>
             </Popover>
