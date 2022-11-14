@@ -12,7 +12,7 @@
 
 # How to use
 
-try on [github pages](https://lepra-tsr.github.io/conglitch/public/index.html).
+try on [github pages](https://tsrkzy.github.io/conglitch/).
 
 ```
 # install modules and packages
